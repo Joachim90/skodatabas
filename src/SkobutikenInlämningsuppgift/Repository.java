@@ -20,13 +20,15 @@ public class Repository {
         }
     }
 
+
+    // Metod som tar in användarnamn och lösenord och returnerar ett customer objekt
     public Customer login(String username, String password) {
         Customer cust = null;
         try (Connection con = DriverManager.getConnection(
                 p.getProperty("url"),
                 p.getProperty("name"),
                 p.getProperty("pass"));
-             PreparedStatement statement = con.prepareStatement("SELECT id, namn, användarnamn from kund where användarnamn =? AND lösenord = ?");
+             PreparedStatement statement = con.prepareStatement("SELECT id, namn from kund where användarnamn =? AND lösenord = ?");
 
         ) {
             statement.setString(1, username);
@@ -36,9 +38,7 @@ public class Repository {
             while (rs.next()) {
                 cust = new Customer(
                         rs.getInt("ID"),
-                        rs.getString("Namn"),
-                        rs.getString("Användarnamn"));
-
+                        rs.getString("Namn"));
             }
 
         } catch (SQLException e) {
@@ -48,27 +48,6 @@ public class Repository {
     }
 
 
-
-    public int getCustomerOrder(int customerId) {
-        int currentOrderId = 0;
-        try (Connection con = DriverManager.getConnection(
-                p.getProperty("url"),
-                p.getProperty("name"),
-                p.getProperty("pass"));
-             CallableStatement statement = con.prepareCall("CALL GetOrCreateOrder(?, ?)")) {
-
-            statement.setInt(1, customerId);
-            statement.registerOutParameter(2, Types.INTEGER);
-
-            statement.execute();
-
-            currentOrderId = statement.getInt(2);
-
-        } catch (SQLException e) {
-            System.out.println(e.getMessage() +"("+e.getErrorCode()+")");
-        }
-        return currentOrderId;
-    }
 
 
     public List<ShoeCategory> getShoeCategories() {
@@ -99,8 +78,8 @@ public class Repository {
         return categories;
     }
 
-    // Returnerar en lista av skor av den valda kategorin
-    public List<Shoe> ShoesInThisCategory(int categoryId) {
+    // Returnerar en lista av skor som tillhör den valda kategorin
+    public List<Shoe> getShoesInThisCategory(int categoryId) {
         ArrayList<Shoe> shoes = new ArrayList<>();
         String query =  "SELECT Sko.id, Sko.märke, Sko.färg, Sko.storlek, Sko.pris, Sko.Antal_i_lager FROM sko " +
                         "INNER JOIN kategoritillhörighet kt ON Sko.id = kt.SkoID " +

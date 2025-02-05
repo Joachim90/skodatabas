@@ -21,7 +21,7 @@ public class UserInteraction {
     }
 
 
-
+    //Skriver ut en lista av entities(shoeCategory/shoe) och läser in användarens svar
     public static <T extends Entity> int printListReadInput(List<T> list) {
         while (true) {
             for (int i = 0; i < list.size(); i++) {

@@ -1,9 +1,6 @@
 package SkobutikenInlämningsuppgift;
 
 
-import com.sun.security.jgss.GSSUtil;
-
-import java.sql.SQLException;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -38,14 +35,6 @@ public class Dashboard {
             }
 
 
-            // Kollar ifall kunden har en aktiv beställning, annars skapas en ny beställning åt kunden.
-            // Tilldelar kunden det beställningsID
-            customer.setActiveOrderId(r.getCustomerOrder(customer.getId()));
-
-
-
-
-
             System.out.println("Välj en skokategori att beställa från, använd siffran för att välja kategori.\nFör att avsluta beställningen ange siffran 99");
 
 
@@ -69,8 +58,8 @@ public class Dashboard {
 
 
 
-            // Skapa lista av skor som tillhör vald kategori
-            List<Shoe> currentCategory = r.ShoesInThisCategory(categoryIdChoice);
+            // Skapa lista av skor som tillhör vald kategori och kolla av om listan är tom.
+            List<Shoe> currentCategory = r.getShoesInThisCategory(categoryIdChoice);
             if (currentCategory.isEmpty()) {
                 System.out.println("Samtliga skor i denna kategori är tyvärr slut.");
                 continue;
@@ -108,7 +97,7 @@ public class Dashboard {
                         throw new InputMismatchException();
                     }
                     shoeQuantity = inputInt;
-                    r.addToCart(customer.getId(), shoeIdChoice, shoeQuantity, customer.getActiveOrderId());
+                    r.addToCart(customer.getId(), shoeIdChoice, shoeQuantity, 1);
                     break;
                 } catch (InputMismatchException e) {
                     System.out.println("Ogiltigt val, försök igen.");
@@ -121,10 +110,9 @@ public class Dashboard {
             }
 
             System.out.println();
-            System.out.println(shoeQuantity + " par " + shoeToOrder.getColor() + ", "+ shoeToOrder.getBrand() + " i storlek " + shoeToOrder.getSize()+ " tillagt i varukorgen.");
-
+            System.out.println(shoeQuantity + " par " + shoeToOrder.getColor() +
+                    ", "+ shoeToOrder.getBrand() + " i storlek " + shoeToOrder.getSize()+ " tillagt i varukorgen.");
         }
-
 
 
         System.out.println("Tack för att du besökte skobutiken. Hejdå!");
