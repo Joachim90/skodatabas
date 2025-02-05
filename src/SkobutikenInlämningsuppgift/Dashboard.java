@@ -1,6 +1,7 @@
 package SkobutikenInlämningsuppgift;
 
 
+import java.io.IOException;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -35,7 +36,7 @@ public class Dashboard {
             }
 
 
-            System.out.println("Välj en skokategori att beställa från, använd siffran för att välja kategori.\nFör att avsluta beställningen ange siffran 99");
+            System.out.println("Välj en skokategori att beställa från, använd siffran för att välja kategori.\nFör att avsluta programmet, ange siffran 99");
 
 
 
@@ -56,8 +57,6 @@ public class Dashboard {
             }
 
 
-
-
             // Skapa lista av skor som tillhör vald kategori och kolla av om listan är tom.
             List<Shoe> currentCategory = r.getShoesInThisCategory(categoryIdChoice);
             if (currentCategory.isEmpty()) {
@@ -65,7 +64,7 @@ public class Dashboard {
                 continue;
             }
 
-            System.out.println("Välj vilken sko du vill beställa genom att ange siffran. För att avsluta, ange siffran 99");
+            System.out.println("Välj vilken sko du vill beställa genom att ange siffran. \nFör att avsluta programmet, ange siffran 99");
 
             while (true) {
                 try {
@@ -91,15 +90,18 @@ public class Dashboard {
                     }
                     if (inputInt > shoeToOrder.getStock()) {
                         System.out.println("I lager finns endast " + shoeToOrder.getStock() + "st par.");
-                        throw new InputMismatchException();
+                        throw new IllegalArgumentException();
                     }else if (inputInt < 1){
                         System.out.println("Hur tänkte du när du försökte beställa " + inputInt + " antal skor??");
-                        throw new InputMismatchException();
+                        throw new IllegalArgumentException();
                     }
                     shoeQuantity = inputInt;
                     r.addToCart(customer.getId(), shoeIdChoice, shoeQuantity, 1);
                     break;
                 } catch (InputMismatchException e) {
+                    System.out.println("Endast siffror tillåtna");
+                    input.nextLine();
+                }catch (IllegalArgumentException e) {
                     System.out.println("Ogiltigt val, försök igen.");
                     input.nextLine();
                 }
