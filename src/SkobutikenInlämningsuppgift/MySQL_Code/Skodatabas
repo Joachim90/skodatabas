@@ -1,0 +1,92 @@
+DELIMITER //
+CREATE PROCEDURE AddToCart(
+	IN IN_KundID INT,
+	IN IN_SkoID INT,
+	IN IN_Kvantitet INT UNSIGNED,
+	IN IN_BeställningsID INT
+)
+
+	BEGIN
+
+		DECLARE EXIT HANDLER FOR 1690
+		BEGIN
+			ROLLBACK;
+			RESIGNAL SET MESSAGE_TEXT = 'Antalet skor du försökte beställa finns inte i lager.';
+		END;
+
+
+        DECLARE EXIT HANDLER FOR 1048
+		BEGIN
+			IF IN_KundID IS NULL THEN
+				ROLLBACK;
+				RESIGNAL SET MESSAGE_TEXT = 'KundID får inte vara null';
+			ELSEIF IN_Kvantitet IS NULL THEN
+				ROLLBACK;
+                RESIGNAL SET MESSAGE_TEXT = 'Antalet skor får inte vara null';
+			ELSEIF IN_SkoID IS NULL THEN
+				ROLLBACK;
+				RESIGNAL SET MESSAGE_TEXT = 'SkoID får inte vara null';
+            END IF;
+		END;
+
+		DECLARE EXIT HANDLER FOR 1452
+		BEGIN
+			IF NOT EXISTS (SELECT * FROM Kund
+            WHERE ID = IN_KundID) THEN
+				ROLLBACK;
+				RESIGNAL SET MESSAGE_TEXT = 'Kunde inte hitta kunden';
+			ELSEIF NOT EXISTS (SELECT * FROM Sko
+            WHERE ID = IN_SkoID) THEN
+				ROLLBACK;
+				RESIGNAL SET MESSAGE_TEXT = 'Skon du försökte beställa finns inte.';
+            END IF;
+		END;
+
+        DECLARE EXIT HANDLER FOR 1264
+		BEGIN
+			ROLLBACK;
+			RESIGNAL SET MESSAGE_TEXT = 'Något gick fel med beställningen';
+		END;
+
+        DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+			ROLLBACK;
+            RESIGNAL SET MESSAGE_TEXT = 'Ett oväntat fel inträffade.';
+		END;
+
+
+
+	start transaction;
+
+
+	CALL GetOrCreateOrder(IN_KundID, IN_BestallningsID);
+
+
+
+	-- Om skon inte finns med i beställningen, lägg till skon och dess antal kopplat till BeställningsID.
+	IF 	(SELECT COUNT(*)
+		FROM Beställs
+		WHERE IN_SkoID = SkoID AND BeställningsID = IN_BeställningsID) = 0
+		THEN
+			CALL CreateShoeOrder(IN_SkoID, IN_Kvantitet, IN_BeställningsID);
+
+
+    -- Om skon finns med i beställningen redan, öka då kvantiteten
+	ELSEIF (SELECT COUNT(*)
+		FROM Beställs
+		WHERE IN_SkoID = SkoID AND BeställningsID = IN_BeställningsID) > 0
+		THEN
+			UPDATE Beställs
+            SET Kvantitet = Kvantitet + IN_Kvantitet
+            WHERE BeställningsID = IN_BeställningsID AND SkoID = IN_SkoID;
+		END IF;
+
+
+
+	-- Minska lagersaldot för vald sko.
+		CALL DecreaseStock(IN_SkoID, IN_Kvantitet);
+
+	COMMIT;
+	END //
+DELIMITER ;
+
