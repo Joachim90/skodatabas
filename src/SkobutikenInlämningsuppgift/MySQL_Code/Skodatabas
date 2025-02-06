@@ -1,3 +1,256 @@
+
+DROP DATABASE IF EXISTS skobutiken2;
+CREATE DATABASE skobutiken2;
+USE skobutiken2;
+
+CREATE TABLE Sko(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+Märke VARCHAR(30),
+Pris INT,
+Färg VARCHAR(30),
+Storlek INT,
+Antal_i_lager INT UNSIGNED,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Slut_i_Lager(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+SkoID INT,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Kategori(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+Namn VARCHAR(30) UNIQUE,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Kategoritillhörighet(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+SkoID INT,
+KategoriID INT,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+FOREIGN KEY (SkoID) REFERENCES Sko(ID) ON DELETE CASCADE,
+FOREIGN KEY (KategoriID) REFERENCES Kategori(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE Adress (
+ID INT PRIMARY KEY AUTO_INCREMENT,
+Ort VARCHAR(30),
+Postnummer INT,
+Gata VARCHAR(30),
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Kund (
+ID INT PRIMARY KEY AUTO_INCREMENT,
+Namn VARCHAR(30),
+Användarnamn VARCHAR(30),
+Lösenord VARCHAR(30),
+Telefon VARCHAR(20),
+AdressID INT,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+FOREIGN KEY (AdressID) REFERENCES Adress(ID) ON DELETE SET NULL
+);
+
+CREATE TABLE Beställning(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+Datum DATE DEFAULT (CURRENT_DATE),
+KundID INT NOT NULL,
+Betald BOOLEAN DEFAULT FALSE,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+FOREIGN KEY (KundID) REFERENCES Kund(ID)
+);
+
+CREATE TABLE Beställs(
+ID INT PRIMARY KEY AUTO_INCREMENT,
+SkoID INT NOT NULL,
+Kvantitet INT NOT NULL,
+BeställningsID INT NOT NULL,
+created timestamp default CURRENT_TIMESTAMP,
+lastUpdate timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+FOREIGN KEY (SkoID) REFERENCES Sko(ID),
+FOREIGN KEY (BeställningsID) REFERENCES Beställning(ID)
+);
+
+INSERT INTO Sko (Märke, Pris, Färg, Storlek, Antal_i_lager)
+VALUES
+("Nike", 999, "Vit", 44, 4),
+("Nike", 799, "Svart", 41, 4),
+("Ecco", 1199, "Brun", 39, 4),
+("Adidas", 899, "Vit", 42, 4),
+("Crocs", 299, "Blå", 43, 4),
+("Nike", 999, "Vit", 42, 4),
+("Crocs", 299, "Blå", 41, 4),
+("FlipFlop", 199, "Gul", 42, 4),
+("Puma", 799, "Grå", 38, 4),
+("Puma", 799, "Grå", 39, 4);
+
+INSERT INTO Kategori(Namn)
+VALUES
+("Sport"),
+("Sneaker"),
+("Vegan"),
+("Loafer"),
+("Joggingsko"),
+("Tofflor"),
+("Street");
+
+INSERT INTO Kategoritillhörighet(SkoID, KategoriID)
+VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 2),
+(3, 3),
+(3, 4),
+(4, 2),
+(4, 7),
+(5, 6),
+(6, 1),
+(6, 2),
+(7, 6),
+(8, 6),
+(9, 1),
+(9, 5),
+(10, 1),
+(10, 5);
+
+
+
+INSERT INTO Adress(Ort, Postnummer, Gata)
+VALUES
+("Haninge",	13743, "Syntaxgatan 1"),
+("Solna", 12312, "Javavägen 4"),
+("Huddinge", 14141,	"Databasstigen 16"),
+("Haninge",	13651, "Hackergränd 6"),
+("Enskede",	14141, "Errorvägen 4");
+
+INSERT INTO Kund (Namn, Användarnamn, Lösenord, Telefon, AdressID)
+VALUES
+("Pelle Svensson", "k1", "asd", "070 - 123 123", 1),
+("Anna Larsson", "k2", "asd", "073 - 101 101", 1),
+("Greger Bengtsson", "k3", "asd",  "073 - 911 911", 2),
+("Lisa Persson", "k4", "asd",  "070 - 101 202", 3),
+("Olle Nilsson", "k5", "asd",  "070 - 133 337", 4),
+("Kalle Olsson", "k6", "asd",  "072 - 111 222", 5),
+("Stina Nilsson", "k7", "asd",  "073 - 111 999", 4);
+
+INSERT INTO Beställning (Datum, KundID, Betald)
+VALUES
+('2024-02-09', 1, 1),
+('2024-05-01', 2, 1),
+('2024-06-02', 3, 1),
+('2024-07-03', 4, 1),
+('2025-01-04', 5, 1),
+('2025-01-04', 6, 1),
+('2025-01-10', 3, 1),
+('2025-01-10', 1, 1),
+('2025-01-11', 7, 1);
+
+INSERT INTO Beställs (SkoID, Kvantitet, BeställningsID)
+VALUES
+(1,	1,	1),
+(2,	1,	1),
+(2,	1,	2),
+(4,	1,	3),
+(4,	2,	4),
+(1,	1,	5),
+(5,	1,	6),
+(6,	1,	7),
+(8,	2,	8),
+(9,	1,	8),
+(7,	20,	9);
+
+CREATE INDEX Beställs_SkoID_BeställnID_IDX
+ON Beställs(SkoID, BeställningsID);
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -- TRIGGER SLUT I LAGER
+ -- Om Antal i lager blir 0 efter uppdatering i Sko-tabellen, lägg det SkoID i Slut_i_lager tabellen
+DELIMITER //
+CREATE TRIGGER after_sko_update
+AFTER UPDATE ON Sko FOR EACH ROW
+BEGIN
+	IF NEW.antal_i_lager = 0 THEN
+		INSERT INTO Slut_i_Lager(SkoID)
+		VALUES (NEW.ID);
+	END IF;
+END//
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE GetOrCreateOrder(
+	IN IN_KundID INT,
+	OUT OUT_BeställningsID INT
+)
+	BEGIN
+	-- Kolla ifall kunden har en obetald beställning, isåfall sätt OUT_BeställningsID till det ID
+	IF (SELECT COUNT(*) FROM Beställning WHERE KundID = IN_KundID AND Betald = FALSE) >= 1
+		THEN
+		SET OUT_BeställningsID = (SELECT MAX(ID) from Beställning WHERE KundID = IN_KundID AND Betald = FALSE);
+	ELSE
+	-- Annars skapa en ny beställning åt kunden och sätt OUT_BeställningsID till last_insertID
+		INSERT INTO Beställning (KundID)
+		VALUES (IN_KundID);
+		SET OUT_BeställningsID = (SELECT LAST_INSERT_ID());
+	END IF;
+	END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE CreateShoeOrder(
+	IN IN_SkoID INT,
+	IN IN_Kvantitet INT,
+	IN IN_BeställningsID INT
+)
+	BEGIN
+		INSERT INTO Beställs (SkoID, Kvantitet, BeställningsID)
+		VALUES (IN_SkoID, IN_Kvantitet, IN_BeställningsID);
+	END //
+DELIMITER ;
+
+
+
+-- Minskar Antal_i_lager i skotabellen
+DELIMITER //
+CREATE PROCEDURE DecreaseStock(
+	IN IN_SkoID INT,
+	IN IN_Antal INT)
+	BEGIN
+		UPDATE Sko SET Antal_i_Lager = Antal_i_Lager - IN_Antal WHERE Sko.ID = IN_SkoID;
+	END //
+	DELIMITER ;
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE AddToCart(
 	IN IN_KundID INT,
@@ -58,20 +311,18 @@ CREATE PROCEDURE AddToCart(
 
 	start transaction;
 
-
+	-- Tar in kundID och returnerar ett orderID där betald = false
 	CALL GetOrCreateOrder(IN_KundID, IN_BestallningsID);
 
 
-
-	-- Om skon inte finns med i beställningen, lägg till skon och dess antal kopplat till BeställningsID.
+	-- Om skon inte finns med i beställs-tabellen så läggs SkoID, Kvantitet och BeställningsID in.
 	IF 	(SELECT COUNT(*)
 		FROM Beställs
 		WHERE IN_SkoID = SkoID AND BeställningsID = IN_BeställningsID) = 0
 		THEN
 			CALL CreateShoeOrder(IN_SkoID, IN_Kvantitet, IN_BeställningsID);
 
-
-    -- Om skon finns med i beställningen redan, öka då kvantiteten
+    -- Om redan skon finns med i beställningen redan, öka då kvantiteten
 	ELSEIF (SELECT COUNT(*)
 		FROM Beställs
 		WHERE IN_SkoID = SkoID AND BeställningsID = IN_BeställningsID) > 0
@@ -86,7 +337,9 @@ CREATE PROCEDURE AddToCart(
 	-- Minska lagersaldot för vald sko.
 		CALL DecreaseStock(IN_SkoID, IN_Kvantitet);
 
-	COMMIT;
+
+
+	commit;
 	END //
 DELIMITER ;
 
